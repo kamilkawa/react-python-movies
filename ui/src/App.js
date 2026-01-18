@@ -8,6 +8,7 @@ function App() {
     const [movies, setMovies] = useState([]);
     const [addingMovie, setAddingMovie] = useState(false);
 
+    // avoid contant connection requesting list of movies from server (constant react rendering) by useEffect
     useEffect(() => {
         const fetchMovies = async () => {
             const response = await fetch(`/movies`);
@@ -32,13 +33,26 @@ function App() {
         }
         }
 
+    async function handleDeleteMovie(movie) {
+        const response = await fetch(`/movies/${movie.id}`, {
+            method: "DELETE",
+        });
+
+        if (response.ok) {
+            const nextMovies = movies.filter(m => m !== movie);
+            setMovies(nextMovies);
+        }
+
+            setMovies(movies.filter(m => m.id !== movie.id));
+        }
+
     return (
         <div className="container">
             <h1>My favourite movies to watch</h1>
             {movies.length === 0
                 ? <p>No movies yet. Maybe add something?</p>
                 : <MoviesList movies={movies}
-                              onDeleteMovie={(movie) => setMovies(movies.filter(m => m !== movie))}
+                              onDeleteMovie={handleDeleteMovie}
                 />}
             {addingMovie
                 ? <MovieForm onMovieSubmit={handleAddMovie}
