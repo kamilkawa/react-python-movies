@@ -28,23 +28,21 @@ function App() {
             headers: { 'Content-Type': 'application/json' }
         });
         if (response.ok) {
+            const MovieWithId= await response.json();
+            movie.id = MovieWithId.id;
             setMovies([...movies, movie]);
             setAddingMovie(false);
         }
         }
-
     async function handleDeleteMovie(movie) {
         const response = await fetch(`/movies/${movie.id}`, {
-            method: "DELETE",
+            method: 'DELETE',
         });
-
         if (response.ok) {
             const nextMovies = movies.filter(m => m !== movie);
             setMovies(nextMovies);
         }
-
-            setMovies(movies.filter(m => m.id !== movie.id));
-        }
+    }
 
     return (
         <div className="container">

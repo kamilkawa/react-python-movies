@@ -1,5 +1,4 @@
-from fastapi import FastAPI, Body
-import requests
+from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Any
 import sqlite3
@@ -10,59 +9,76 @@ class Movie(BaseModel):
     year: str
     actors: str
 
+
 app = FastAPI()
+
 
 @app.get("/")
 def read_root():
     return {"message": "Hello World"}
 
-@app.get('/movies')
+
+@app.get("/movies")
 def get_movies():  # put application's code here
-    db = sqlite3.connect('movies.db')
+    db = sqlite3.connect("movies.db")
     cursor = db.cursor()
-    movies = cursor.execute('SELECT * FROM movies')
+    movies = cursor.execute("SELECT * FROM movies")
 
     output = []
     for movie in movies:
-         movie = {'id': movie[0], 'title': movie[1], 'year': movie[2], 'actors': movie[3]}
-         output.append(movie)
+        movie = {
+            "id": movie[0],
+            "title": movie[1],
+            "year": movie[2],
+            "actors": movie[3],
+        }
+        output.append(movie)
     return output
 
-@app.get('/movies/{movie_id}')
-def get_single_movie(movie_id:int):  # put application's code here
-    db = sqlite3.connect('movies.db')
+
+@app.get("/movies/{movie_id}")
+def get_single_movie(movie_id: int):  # put application's code here
+    db = sqlite3.connect("movies.db")
     cursor = db.cursor()
     movie = cursor.execute(f"SELECT * FROM movies WHERE id={movie_id}").fetchone()
     if movie is None:
-        return {'message': "Movie not found"}
-    return {'title': movie[1], 'year': movie[2], 'actors': movie[3]}
+        return {"message": "Movie not found"}
+    return {"title": movie[1], "year": movie[2], "actors": movie[3]}
+
 
 @app.post("/movies")
 def add_movie(movie: Movie):
-    db = sqlite3.connect('movies.db')
+    db = sqlite3.connect("movies.db")
     cursor = db.cursor()
-    cursor.execute(f"INSERT INTO movies (title, year, actors) VALUES ('{movie.title}', '{movie.year}', '{movie.actors}')")
+    cursor.execute(
+        f"INSERT INTO movies (title, year, actors) VALUES ('{movie.title}', '{movie.year}', '{movie.actors}')"
+    )
     db.commit()
-    return {"message": f"Movie with id = {cursor.lastrowid} added successfully"}
+    return {
+        "message": f"Movie with id = {cursor.lastrowid} added successfully",
+        "id": cursor.lastrowid,
+    }
     # movie = models.Movie.create(**movie.dict())
     # return movie
 
+
 @app.put("/movies/{movie_id}")
-def update_movie(movie_id:int, params: dict[str, Any]):
-    db = sqlite3.connect('movies.db')
+def update_movie(movie_id: int, params: dict[str, Any]):
+    db = sqlite3.connect("movies.db")
     cursor = db.cursor()
     cursor.execute(
-    "UPDATE movies SET title = ?, year = ?, actors = ? WHERE id = ?",
-    (params['title'], params['year'], params['actors'], movie_id)
+        "UPDATE movies SET title = ?, year = ?, actors = ? WHERE id = ?",
+        (params["title"], params["year"], params["actors"], movie_id),
     )
     db.commit()
     if cursor.rowcount == 0:
         return {"message": f"Movie with id = {movie_id} not found"}
     return {"message": f"Movie with id = {cursor.lastrowid} updated successfully"}
 
+
 @app.delete("/movies/{movie_id}")
-def delete_movie(movie_id:int):
-    db = sqlite3.connect('movies.db')
+def delete_movie(movie_id: int):
+    db = sqlite3.connect("movies.db")
     cursor = db.cursor()
     cursor.execute("DELETE FROM movies WHERE id = ?", (movie_id,))
     db.commit()
@@ -70,9 +86,10 @@ def delete_movie(movie_id:int):
         return {"message": f"Movie with id = {movie_id} not found"}
     return {"message": f"Movie with id = {movie_id} deleted successfully"}
 
+
 @app.delete("/movies")
-def delete_movies(movie_id:int):
-    db = sqlite3.connect('movies.db')
+def delete_movies(movie_id: int):
+    db = sqlite3.connect("movies.db")
     cursor = db.cursor()
     cursor.execute("DELETE FROM movies")
     db.commit()
