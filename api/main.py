@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Any
 import sqlite3
@@ -12,10 +14,16 @@ class Movie(BaseModel):
 
 app = FastAPI()
 
+app.mount(
+    "/static",
+    StaticFiles(directory="../ui/build/static", check_dir=False),
+    name="static",
+)
+
 
 @app.get("/")
-def read_root():
-    return {"message": "Hello World"}
+def serve_react_app():
+    return FileResponse("../ui/build/index.html")
 
 
 @app.get("/movies")
