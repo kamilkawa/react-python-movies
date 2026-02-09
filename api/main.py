@@ -4,6 +4,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import Any
 import sqlite3
+import os
 
 
 class Movie(BaseModel):
@@ -14,6 +15,9 @@ class Movie(BaseModel):
 class Actor(BaseModel):
     name: str
 
+
+# Get database path relative to this file
+DB_PATH = os.path.join(os.path.dirname(__file__), "movies.db")
 
 app = FastAPI()
 
@@ -31,7 +35,7 @@ def serve_react_app():
 
 @app.get("/movies")
 def get_movies():  # put application's code here
-    db = sqlite3.connect("api/movies.db")
+    db = sqlite3.connect(DB_PATH)
     cursor = db.cursor()
     movies = cursor.execute("SELECT * FROM movies")
 
@@ -49,7 +53,7 @@ def get_movies():  # put application's code here
 
 @app.get("/movies/{movie_id}")
 def get_single_movie(movie_id: int):  # put application's code here
-    db = sqlite3.connect("api/movies.db")
+    db = sqlite3.connect(DB_PATH)
     cursor = db.cursor()
     movie = cursor.execute(f"SELECT * FROM movies WHERE id={movie_id}").fetchone()
     if movie is None:
@@ -59,7 +63,7 @@ def get_single_movie(movie_id: int):  # put application's code here
 
 @app.post("/movies")
 def add_movie(movie: Movie):
-    db = sqlite3.connect("api/movies.db")
+    db = sqlite3.connect(DB_PATH)
     cursor = db.cursor()
     cursor.execute(
         f"INSERT INTO movies (title, year) VALUES ('{movie.title}', '{movie.year}')"
@@ -75,7 +79,7 @@ def add_movie(movie: Movie):
 
 @app.put("/movies/{movie_id}")
 def update_movie(movie_id: int, params: dict[str, Any]):
-    db = sqlite3.connect("api/movies.db")
+    db = sqlite3.connect(DB_PATH)
     cursor = db.cursor()
     cursor.execute(
         "UPDATE movies SET title = ?, year = ?, actors = ? WHERE id = ?",
@@ -89,7 +93,7 @@ def update_movie(movie_id: int, params: dict[str, Any]):
 
 @app.delete("/movies/{movie_id}")
 def delete_movie(movie_id: int):
-    db = sqlite3.connect("api/movies.db")
+    db = sqlite3.connect(DB_PATH)
     cursor = db.cursor()
     cursor.execute("DELETE FROM movies WHERE id = ?", (movie_id,))
     db.commit()
@@ -100,7 +104,7 @@ def delete_movie(movie_id: int):
 
 @app.delete("/movies")
 def delete_movies(movie_id: int):
-    db = sqlite3.connect("api/movies.db")
+    db = sqlite3.connect(DB_PATH)
     cursor = db.cursor()
     cursor.execute("DELETE FROM movies")
     db.commit()
@@ -110,7 +114,7 @@ def delete_movies(movie_id: int):
 # Actors endpoints
 @app.get("/actors")
 def get_actors():
-    db = sqlite3.connect("api/movies.db")
+    db = sqlite3.connect(DB_PATH)
     cursor = db.cursor()
     actors = cursor.execute("SELECT * FROM actors")
 
@@ -126,7 +130,7 @@ def get_actors():
 
 @app.post("/actors")
 def add_actor(actor: Actor):
-    db = sqlite3.connect("api/movies.db")
+    db = sqlite3.connect(DB_PATH)
     cursor = db.cursor()
     cursor.execute(f"INSERT INTO actors (name) VALUES ('{actor.name}')")
     db.commit()
@@ -138,7 +142,7 @@ def add_actor(actor: Actor):
 
 @app.delete("/actors/{actor_id}")
 def delete_actor(actor_id: int):
-    db = sqlite3.connect("api/movies.db")
+    db = sqlite3.connect(DB_PATH)
     cursor = db.cursor()
     cursor.execute("DELETE FROM movie_actors WHERE actor_id = ?", (actor_id,))
     cursor.execute("DELETE FROM actors WHERE id = ?", (actor_id,))
@@ -151,7 +155,7 @@ def delete_actor(actor_id: int):
 # Movie-Actor relationships
 @app.get("/movies/{movie_id}/actors")
 def get_movie_actors(movie_id: int):
-    db = sqlite3.connect("api/movies.db")
+    db = sqlite3.connect(DB_PATH)
     cursor = db.cursor()
     actors = cursor.execute(
         "SELECT a.id, a.name FROM actors a JOIN movie_actors ma ON a.id = ma.actor_id WHERE ma.movie_id = ?",
@@ -170,7 +174,7 @@ def get_movie_actors(movie_id: int):
 
 @app.post("/movies/{movie_id}/actors/{actor_id}")
 def assign_actor_to_movie(movie_id: int, actor_id: int):
-    db = sqlite3.connect("api/movies.db")
+    db = sqlite3.connect(DB_PATH)
     cursor = db.cursor()
     cursor.execute(
         "INSERT INTO movie_actors (movie_id, actor_id) VALUES (?, ?)",
@@ -182,7 +186,7 @@ def assign_actor_to_movie(movie_id: int, actor_id: int):
 
 @app.delete("/movies/{movie_id}/actors/{actor_id}")
 def remove_actor_from_movie(movie_id: int, actor_id: int):
-    db = sqlite3.connect("api/movies.db")
+    db = sqlite3.connect(DB_PATH)
     cursor = db.cursor()
     cursor.execute(
         "DELETE FROM movie_actors WHERE movie_id = ? AND actor_id = ?",
