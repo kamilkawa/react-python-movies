@@ -1,4 +1,5 @@
 import {useState, useEffect} from "react";
+import { toast } from 'react-toastify';
 
 export default function MovieListItem(props) {
     const [movieActors, setMovieActors] = useState([]);
@@ -24,15 +25,26 @@ export default function MovieListItem(props) {
         });
         if (response.ok) {
             fetchMovieActors();
+            const actorName = props.allActors.find(a => a.id === parseInt(actorId))?.name;
+            toast.success(`Actor "${actorName}" assigned to movie`);
+        } else {
+            toast.error('Failed to assign actor');
         }
     }
 
     async function handleRemoveActor(actorId) {
+        const actor = movieActors.find(a => a.id === actorId);
+        if (!window.confirm(`Remove "${actor.name}" from this movie?`)) {
+            return;
+        }
         const response = await fetch(`/movies/${props.movie.id}/actors/${actorId}`, {
             method: 'DELETE',
         });
         if (response.ok) {
             fetchMovieActors();
+            toast.success(`Actor "${actor.name}" removed from movie`);
+        } else {
+            toast.error('Failed to remove actor');
         }
     }
 

@@ -5,6 +5,8 @@ import MovieForm from "./MovieForm";
 import MoviesList from "./MoviesList";
 import ActorForm from "./ActorForm";
 import ActorsList from "./ActorsList";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
     const [movies, setMovies] = useState([]);
@@ -44,15 +46,25 @@ function App() {
             movie.id = MovieWithId.id;
             setMovies([...movies, movie]);
             setAddingMovie(false);
+            toast.success(`Movie "${movie.title}" added successfully!`);
+        } else {
+            toast.error('Failed to add movie');
         }
-        }
+    }
+    
     async function handleDeleteMovie(movie) {
+        if (!window.confirm(`Are you sure you want to delete "${movie.title}"?`)) {
+            return;
+        }
         const response = await fetch(`/movies/${movie.id}`, {
             method: 'DELETE',
         });
         if (response.ok) {
             const nextMovies = movies.filter(m => m !== movie);
             setMovies(nextMovies);
+            toast.success(`Movie "${movie.title}" deleted`);
+        } else {
+            toast.error('Failed to delete movie');
         }
     }
 
@@ -67,21 +79,41 @@ function App() {
             actor.id = actorWithId.id;
             setActors([...actors, actor]);
             setAddingActor(false);
+            toast.success(`Actor "${actor.name}" added successfully!`);
+        } else {
+            toast.error('Failed to add actor');
         }
     }
 
     async function handleDeleteActor(actor) {
+        if (!window.confirm(`Are you sure you want to delete "${actor.name}"?`)) {
+            return;
+        }
         const response = await fetch(`/actors/${actor.id}`, {
             method: 'DELETE',
         });
         if (response.ok) {
             const nextActors = actors.filter(a => a !== actor);
             setActors(nextActors);
+            toast.success(`Actor "${actor.name}" deleted`);
+        } else {
+            toast.error('Failed to delete actor');
         }
     }
 
     return (
         <div className="container">
+            <ToastContainer 
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+            />
             <h1>My favourite movies to watch</h1>
             
             <div style={{marginBottom: '40px'}}>
