@@ -3,12 +3,14 @@ import {useState, useEffect} from "react";
 import "milligram";
 import MovieForm from "./MovieForm";
 import MoviesList from "./MoviesList";
+import ActorsManager from "./ActorsManager";
 
 function App() {
     const [movies, setMovies] = useState([]);
+    const [actors, setActors] = useState([]);
     const [addingMovie, setAddingMovie] = useState(false);
 
-    // avoid contant connection requesting list of movies from server (constant react rendering) by useEffect
+    // fetch movies and actors
     useEffect(() => {
         const fetchMovies = async () => {
             const response = await fetch(`/movies`);
@@ -17,30 +19,64 @@ function App() {
                 setMovies(movies);
             }
         };
+        const fetchActors = async () => {
+            const response = await fetch(`/actors`);
+            if (response.ok) {
+                const data = await response.json();
+                setActors(data);
+            }
+        };
         fetchMovies();
+        fetchActors();
     }, []);
 
     async function handleAddMovie(movie) {
-        movie.actors = '';
         const response = await fetch('/movies', {
             method: 'POST',
             body: JSON.stringify(movie),
             headers: { 'Content-Type': 'application/json' }
         });
         if (response.ok) {
-            const MovieWithId= await response.json();
-            movie.id = MovieWithId.id;
-            setMovies([...movies, movie]);
+            const moviesResp = await fetch('/movies');
+            if (moviesResp.ok) {
+                 setMovies(await moviesResp.json());
+            }
             setAddingMovie(false);
         }
-        }
+    }
+
     async function handleDeleteMovie(movie) {
         const response = await fetch(`/movies/${movie.id}`, {
             method: 'DELETE',
         });
         if (response.ok) {
-            const nextMovies = movies.filter(m => m !== movie);
+            const nextMovies = movies.filter(m => m.id !== movie.id);
             setMovies(nextMovies);
+        }
+    }
+
+    async function handleAddActor(name) {
+        const response = await fetch('/actors', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({name})
+        });
+        if (response.ok) {
+            const newActor = await response.json();
+            setActors([...actors, {id: newActor.id, name: newActor.name}]);
+        }
+    }
+
+    async function handleDeleteActor(id) {
+        const response = await fetch(`/actors/${id}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            setActors(actors.filter(a => a.id !== id));
+            const moviesResp = await fetch('/movies');
+            if (moviesResp.ok) {
+                 setMovies(await moviesResp.json());
+            }
         }
     }
 
@@ -55,8 +91,18 @@ function App() {
             {addingMovie
                 ? <MovieForm onMovieSubmit={handleAddMovie}
                              buttonLabel="Add a movie"
+                             availableActors={actors}
                 />
                 : <button onClick={() => setAddingMovie(true)}>Add a movie</button>}
+            
+            <div style={{marginTop: '40px', borderTop: '1px solid #ccc', paddingTop: '20px'}}>
+                <h2>Manage Actors</h2>
+                <ActorsManager 
+                    actors={actors}
+                    onAddActor={handleAddActor}
+                    onDeleteActor={handleDeleteActor}
+                />
+            </div>
         </div>
     );
 }
